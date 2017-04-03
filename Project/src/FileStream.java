@@ -1,12 +1,15 @@
 import java.io.*;
-import java.nio.*;
 
 public class FileStream extends InputStream implements Serializable {
     private int currentPosition;
     private byte[] byteBuffer;
     private int size;
 
-    public FileStream(String pathName) throws FileNotFoundException, IOException {
+    public FileStream() {
+        currentPosition = 0;
+    }
+
+    public FileStream(String pathName) throws IOException {
         File file = new File(pathName);
         size = (int)file.length();
         byteBuffer = new byte[size];
@@ -17,10 +20,6 @@ public class FileStream extends InputStream implements Serializable {
             byteBuffer[i++] = (byte)fileInputStream.read();
         }
         fileInputStream.close();
-        currentPosition = 0;
-    }
-
-    public FileStream() throws FileNotFoundException {
         currentPosition = 0;
     }
 

@@ -1,7 +1,5 @@
 import java.rmi.*;
 import java.rmi.registry.*;
-import java.rmi.server.*;
-import java.net.*;
 import java.util.*;
 import java.io.*;
 
@@ -54,7 +52,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
     public InputStream get(long guidObject) throws RemoteException {
         FileStream file = null;
 
-        //TODO get  the file ./port/repository/guid
+        //TODO get the file ./port/repository/guid
         return file;
     }
 
@@ -76,7 +74,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
 
     public ChordMessageInterface locateSuccessor(long key) throws RemoteException {
         if (key == guid)
-            throw new IllegalArgumentException("Key must be distinct that  " + guid);
+            throw new IllegalArgumentException("Key must be distinct that " + guid);
         if (successor.getId() != guid) {
             if (isKeyInSemiCloseInterval(key, guid, successor.getId())) return successor;
 
@@ -92,7 +90,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         return successor;
     }
 
-    public void joinRing(String ip, int port)  throws RemoteException {
+    public void joinRing(String ip, int port) throws RemoteException {
         try {
             System.out.println("Get Registry to joining ring");
 
@@ -104,13 +102,14 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
 
             System.out.println("Joining ring");
         }  catch(RemoteException | NotBoundException e) {
+            e.printStackTrace();
             successor = this;
         }
     }
 
     public void findingNextSuccessor() {
         successor = this;
-        for (int i = 0;  i < M; i++) {
+        for (int i = 0; i < M; i++) {
             try {
                 if (finger[i].isAlive()) successor = finger[i];
             } catch(RemoteException | NullPointerException e) {
@@ -135,8 +134,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
 
     public void notify(ChordMessageInterface j) throws RemoteException {
         if (predecessor == null || (predecessor != null && isKeyInOpenInterval(j.getId(), predecessor.getId(), guid)))
-            // TODO
-            //transfer keys in the range [j,i) to j;
+            // TODO: transfer keys in the range [j,i) to j;
             predecessor = j;
     }
 
@@ -170,7 +168,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
 
     public Chord(int port, long guid) throws RemoteException {
         finger = new ChordMessageInterface[M];
-        for (int j = 0; j < M; j++) finger[j] = null;
+        Arrays.stream(finger).forEach(f -> f = null);
         this.guid = guid;
 
         predecessor = null;
@@ -184,10 +182,11 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
                 checkPredecessor();
             }
         }, 500, 500);
+
         try {
             // create the registry and bind the name and object.
-            System.out.println(guid + " is starting RMI at port = " + port);
-            registry = LocateRegistry.createRegistry( port );
+            System.out.printf("%d is starting RMI at port %d\n", guid, port);
+            registry = LocateRegistry.createRegistry(port);
             registry.rebind("Chord", this);
         }
         catch(RemoteException e) {
@@ -195,20 +194,21 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         }
     }
 
-    void Print() {
+    void print() {
         try {
-            if (successor != null)
-                System.out.println("successor "+ successor.getId());
-            if (predecessor != null)
-                System.out.println("predecessor "+ predecessor.getId());
-            for (int i = 0; i < M; i++) {
-                try {
-                    if (finger != null)
-                        System.out.println("Finger "+ i + " " + finger[i].getId());
-                } catch(NullPointerException e) {
-                    finger[i] = null;
+            System.out.printf("\nSuccessor: %s\n", successor == null ? "none" : Long.toString(successor.getId()));
+            System.out.printf("Predecessor: %s\n", predecessor == null ? "none" : Long.toString(predecessor.getId()));
+            if(Arrays.stream(finger).allMatch(f -> f != null)) {
+                System.out.println("--- Finger Table ---");
+                for (int i = 0; i < M; i++) {
+                    try {
+                        System.out.printf("Finger %d: %d\n", i, finger[i].getId());
+                    } catch (NullPointerException e) {
+                        finger[i] = null;
+                    }
                 }
             }
+            System.out.println();
         }
         catch(RemoteException e) {
             System.out.println("Cannot retrieve id");
