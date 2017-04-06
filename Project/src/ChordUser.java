@@ -7,9 +7,9 @@ import java.nio.file.*;
 import java.util.stream.Stream;
 
 public class ChordUser {
-    private int port;
-    private long guid;
-    private Chord chord;
+    private int port; // The port this user is listening on
+    private long guid; // The global unique identifier of this user
+    private Chord chord; // The chord object for this user
 
     /**
      * Constructor for the ChordUser class
@@ -27,7 +27,7 @@ public class ChordUser {
      */
     public boolean join(String[] input) {
         // Verify user input
-        if(input.length < 3) {
+        if (input.length < 3) {
             System.out.printf("Expected arguments <ip> and <port>, but received %d %s\n", input.length - 1, input.length == 2 ? "arg" : "args");
             return false;
         }
@@ -49,7 +49,7 @@ public class ChordUser {
      */
     public boolean write(String[] input) {
         // Verify user input
-        if(input.length != 2) {
+        if (input.length != 2) {
             System.out.printf("Expected argument <file>, but received %d args\n", input.length - 1);
             return false;
         }
@@ -62,7 +62,7 @@ public class ChordUser {
             // Find the peer responsible for hosting the user-requested file
             ChordMessageInterface peer = chord.locateSuccessor(guidObject);
             FileStream file = new FileStream(path);
-            if(peer != null) peer.put(guidObject, file); // Put the file into the ring
+            if (peer != null) peer.put(guidObject, file); // Put the file into the ring
             else {
                 System.out.println("Unable to write file because of node corruption");
                 return false;
@@ -87,7 +87,7 @@ public class ChordUser {
      */
     public boolean read(String[] input) {
         // Verify user input
-        if(input.length != 2) {
+        if (input.length != 2) {
             System.out.printf("Expected argument <file>, but received %d args\n", input.length - 1);
             return false;
         }
@@ -116,17 +116,17 @@ public class ChordUser {
 
             Scanner in = new Scanner(System.in);
             System.out.println("Would you like to print the contents of the file here? (yes or no)");
-            if(in.nextLine().toLowerCase().equals("yes")) {
+            if (in.nextLine().toLowerCase().equals("yes")) {
                 System.out.println("-----------------------------------");
                 try (Stream<String> stream = Files.lines(Paths.get(savePath))) {
                     stream.forEach(System.out::println);
-                } catch (IOException e) {
+                } catch(IOException e) {
                     System.out.printf("There was an error reading the file -> %s\n", e.getMessage());
                 }
                 System.out.println("-----------------------------------");
             }
         } catch(IOException e) {
-            if(e instanceof RemoteException) e.printStackTrace();
+            if (e instanceof RemoteException) e.printStackTrace();
             else System.out.println("That file does not exist");
             return false;
         }
@@ -140,7 +140,7 @@ public class ChordUser {
      */
     public boolean delete(String[] input) {
         // Verify user input
-        if(input.length != 2) {
+        if (input.length != 2) {
             System.out.printf("Expected argument <file>, but received %d args\n", input.length - 1);
             return false;
         }
@@ -151,7 +151,7 @@ public class ChordUser {
 
             // Find the peer responsible for the user-requested file
             ChordMessageInterface peer = chord.locateSuccessor(guidObject);
-            if(peer != null) peer.delete(guidObject); // If we found the peer, try and delete the file
+            if (peer != null) peer.delete(guidObject); // If we found the peer, try and delete the file
             else {
                 System.out.println("Unable to delete file because of node corruption");
                 return false;
@@ -174,7 +174,7 @@ public class ChordUser {
      */
     public void quit() {
         // Try to method to transfer files from this user to other peers
-        if(chord != null) chord.leave();
+        if (chord != null) chord.leave();
     }
 
     /**
@@ -224,6 +224,8 @@ public class ChordUser {
                             delete(input);
                             break;
                         case "leave":
+                            timer.cancel();
+                            timer.purge();
                             System.exit(1);
                             break;
                         default:
