@@ -232,7 +232,7 @@ public class Chord extends java.rmi.server.UnicastRemoteObject implements ChordM
         File repo = new File(path);
 
         File[] files = repo.listFiles();
-        for(File file : files) {
+        for (File file : files) {
             if (!file.getName().matches("[0-9]+")) continue; // Ignores system files like .DS_store, for example
             long fileName = Long.parseLong(file.getName());
             if (killChord || isKeyInOpenInterval(fileName, this.guid, j.getId())) {
